@@ -1,5 +1,5 @@
 ﻿using System;
-using System.Data.Common;
+using System.Collections.Generic;
 
 namespace TeamWork
 {
@@ -11,7 +11,7 @@ namespace TeamWork
 
             while (true)
             {
-                Console.WriteLine("Enter the time in minutes for the worker to draw 1 picture:");
+                Console.WriteLine("Enter the time in minutes for the worker to draw 1 picture (or leave blank to finish):");
                 string input = Console.ReadLine() ?? string.Empty;
 
                 if (string.IsNullOrEmpty(input) && workers.Count > 0)
@@ -26,7 +26,7 @@ namespace TeamWork
                 }
                 else
                 {
-                    Console.WriteLine("Invalid input. Please enter a valid speed or 'No' to stop.");
+                    Console.WriteLine("Invalid input. Please enter a valid speed or leave blank to finish.");
                 }
             }
 
@@ -41,26 +41,22 @@ namespace TeamWork
                 foreach (Worker worker in brigade.GetWorkers())
                 {
                     i++;
-                    Console.WriteLine("Worker #" + i + ":");
-                    Console.WriteLine("Worker speed: " + Math.Round(worker.GetCapacity(), 3) + " images per minute");
-                    Console.WriteLine("Worker processed images: " + worker.GetProcessedImages());
-                    Console.WriteLine("Readines of the last image in progress: " + worker.PictureReadiness);
-                    Console.WriteLine("Worker processed images by approximate time: " + worker.GetProcessedImagesByApproximateTime());
+                    Console.WriteLine($"Worker #{i}:");
+                    Console.WriteLine($"Worker speed: {Math.Round(worker.GetCapacity(), 3)} images per minute");
+                    Console.WriteLine($"Worker processed images: {worker.GetProcessedImages()}");
+                    Console.WriteLine($"Readiness of the last image in progress: {worker.PictureReadiness}");
+                    Console.WriteLine($"Worker processed images by approximate time: {worker.GetProcessedImagesByApproximateTime()}");
                     Console.WriteLine("\n");
                 }
 
-                Console.WriteLine("The brigade processed " +
-                 brigade.GetProcessedImages() +
-                 " image(s) for " + Math.Round(brigade.GetTime(), 3) + " minutes.");
-                Console.WriteLine("The brigade processed " + brigade.GetProcessedImagesByApproximateTime() + " image(s) for approximate time: " + Math.Round(brigade.GetApproximateTime(), 3) + " minutes.");
-
+                Console.WriteLine($"The brigade processed {brigade.GetProcessedImages()} image(s) for {Math.Round(brigade.GetTime(), 3)} minutes.");
+                Console.WriteLine($"The brigade processed {brigade.GetProcessedImagesByApproximateTime()} image(s) for approximate time: {Math.Round(brigade.GetApproximateTime(), 3)} minutes.");
             }
             else
             {
                 Console.WriteLine("Invalid input. Please enter a valid number of images.");
             }
         }
-
     }
 
     public class Worker
@@ -93,29 +89,13 @@ namespace TeamWork
             this.PictureReadiness = processedImages - Math.Truncate(processedImages);
 
             return (int)Math.Floor(processedImages);
-
         }
 
         // Getter methods
-        public decimal GetCapacity()
-        {
-            return this.Capacity;
-        }
-
-        public decimal GetSpeed()
-        {
-            return this.Speed;
-        }
-
-        public decimal GetProcessedImages()
-        {
-            return this.ProcessedImages;
-        }
-
-        public decimal GetProcessedImagesByApproximateTime()
-        {
-            return this.ProcessedImagesByApproximateTime;
-        }
+        public decimal GetCapacity() => this.Capacity;
+        public decimal GetSpeed() => this.Speed;
+        public decimal GetProcessedImages() => this.ProcessedImages;
+        public decimal GetProcessedImagesByApproximateTime() => this.ProcessedImagesByApproximateTime;
     }
 
     public class Brigade
@@ -129,7 +109,6 @@ namespace TeamWork
         private int DesiredImagesNumber;
         private List<decimal> PosibleRealTimes;
         private int UnfinishedImages;
-
 
         public Brigade(List<Worker> workers)
         {
@@ -145,8 +124,7 @@ namespace TeamWork
             this.CalculateApproximateBrigadeProcessedImages(this.ApproximateTime);
             this.CalculatePosibleRealTimes();
             this.CalculateRealTime();
-            this.ProcessedImages = this.CalculateBrigadeProcessedImages(this.Time); ;
-
+            this.ProcessedImages = this.CalculateBrigadeProcessedImages(this.Time);
         }
 
         protected void CalculateApproximateTime()
@@ -157,10 +135,9 @@ namespace TeamWork
         public void CalculateApproximateBrigadeProcessedImages(decimal time)
         {
             int processedImages = 0;
-            int workerProcessedImages;
             foreach (Worker worker in this.Workers)
             {
-                workerProcessedImages = worker.CalculateProcessedImages(time);
+                int workerProcessedImages = worker.CalculateProcessedImages(time);
                 worker.SetProcessedImagesByApproximateTime(workerProcessedImages);
                 processedImages += workerProcessedImages;
             }
@@ -186,18 +163,16 @@ namespace TeamWork
                 }
             }
 
-            List<decimal> posibleRealTimesList = new List<decimal>(posibleRealTimes);
-            posibleRealTimesList.Sort();
-            this.PosibleRealTimes = posibleRealTimesList;
+            this.PosibleRealTimes = new List<decimal>(posibleRealTimes);
+            this.PosibleRealTimes.Sort();
         }
 
         private int CalculateBrigadeProcessedImages(decimal time)
         {
             int processedImages = 0;
-            int workerProcessedImages;
             foreach (Worker worker in this.Workers)
             {
-                workerProcessedImages = worker.CalculateProcessedImages(time);
+                int workerProcessedImages = worker.CalculateProcessedImages(time);
                 processedImages += workerProcessedImages;
                 worker.SetProcessedImages(workerProcessedImages);
             }
@@ -207,27 +182,22 @@ namespace TeamWork
 
         public void CalculateRealTime()
         {
-            int processedImages;
             if (this.UnfinishedImages == 0)
             {
                 this.Time = this.ApproximateTime;
                 this.ProcessedImages = this.ProcessedImagesByBrigadeAtApproximateTime;
-
                 return;
             }
 
             foreach (decimal posibleRealTime in this.PosibleRealTimes)
             {
-                processedImages = CalculateBrigadeProcessedImages(posibleRealTime);
+                int processedImages = CalculateBrigadeProcessedImages(posibleRealTime);
                 if (processedImages >= this.DesiredImagesNumber)
                 {
                     this.Time = posibleRealTime;
-
                     break;
                 }
             }
-
-
         }
 
         public decimal CalculateBrigadeCapacity()
@@ -241,36 +211,12 @@ namespace TeamWork
             return brigadeCapacity;
         }
 
-
         // Getter methods
-        public List<Worker> GetWorkers()
-        {
-            return this.Workers;
-        }
-
-        public decimal GetTime()
-        {
-            return this.Time;
-        }
-
-        public decimal GetApproximateTime()
-        {
-            return this.ApproximateTime;
-        }
-
-        public decimal GetProcessedImages()
-        {
-            return this.ProcessedImages;
-        }
-
-        public decimal GetProcessedImagesByApproximateTime()
-        {
-            return this.ProcessedImagesByBrigadeAtApproximateTime;
-        }
-
-        public int GetUnfinishedImages()
-        {
-            return this.UnfinishedImages;
-        }
+        public List<Worker> GetWorkers() => this.Workers;
+        public decimal GetTime() => this.Time;
+        public decimal GetApproximateTime() => this.ApproximateTime;
+        public int GetProcessedImages() => this.ProcessedImages;
+        public int GetProcessedImagesByApproximateTime() => this.ProcessedImagesByBrigadeAtApproximateTime;
+        public int GetUnfinishedImages() => this.UnfinishedImages;
     }
 }
